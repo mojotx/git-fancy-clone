@@ -1,0 +1,157 @@
+#!/bin/bash
+
+#####################################################################
+#   Color stuff
+#####################################################################
+if [[ -x /usr/bin/tput ]] && tput setaf 1 >&/dev/null; then
+    BLK="\033[30m"
+    RED="\033[31m"
+    GRN="\033[32m"
+    YEL="\033[33m"
+    BLU="\033[34m"
+    MAG="\033[35m"
+    CYN="\033[36m"
+    WHT="\033[37m"
+    BRI="\033[01m"
+    NRM="\033[0m"
+fi
+
+function err_msg()
+{
+    msg "${1}" "${RED}"
+}
+
+function debug_msg()
+{
+    msg "${1}" "${BRI}${BLK}"
+}
+
+function warn_msg()
+{
+    msg "${1}" "${YEL}"
+}
+
+function info_msg()
+{
+    msg "${1}" "${GRN}"
+}
+
+function msg()
+{
+    local s=$1
+    local c=$2
+    local -i len=0
+    if [[ "${s}" =~ ^.*\n.*$ ]]
+    then
+        declare -a A
+        IFS=$'\n' read -d '' -r -a A < <(printf '%s\0' "${s}")
+        for E in "${A[@]}"
+        do
+            if [[ ${#E} -gt ${len} ]]
+            then
+                len=${#E}
+            fi
+        done
+    else
+        len=${#s}
+    fi
+
+    local -i fd=1
+
+    local dc=""
+
+    if [[ "${c}" =~ "${RED}"|"${YEL}"|"${BRI}${BLK}" ]]
+    then
+        (( fd+=1 ))
+        dc="${c}"
+    else
+        dc="${MAG}"
+    fi
+
+    print_div ${len} "${dc}" >&${fd}
+    echo -e "${c}${s}${NRM}" >&${fd}
+    print_div ${len} "${dc}" >&${fd}
+
+    #echo -e "${c}${fd}: ${s}${NRM}" >&${fd}
+}
+
+function print_div()
+{
+    count=$1
+    color=$2
+    echo -ne "${color}"
+    while [[ $count -ge 0 ]]
+    do
+        echo -ne '-'
+        (( count-=1 ))
+    done
+    echo -e "${NRM}"
+}
+
+# ------------------------------------------------------------------------
+# Start of main processing
+# ------------------------------------------------------------------------
+
+
+# Find the repo
+for arg in "${@}"
+do
+    if [[ $arg =~ ^- ]]
+    then
+        continue
+    else
+        REPO=$arg
+    fi
+done
+
+if [[ -z ${REPO} ]]
+then
+    err_msg "Must specify repository!"
+    exit 1
+fi
+
+# FILEP is the "file portion" of the remote repository
+# For example, with https://gitlab.com/alpha/bravo.git,
+# the file portion is "alpha/bravo.git"
+case ${REPO} in
+    http*)
+        FILEP="$( echo "${REPO}" | cut -f 4- -d '/' )"
+        ;;
+
+    git@*)
+        FILEP="$( echo "${REPO}" | cut -f 2- -d ':' )"
+        ;;
+
+    *)
+        err_msg "I cannot recognize what kind of repository you mean by \"${REPO}\""
+        exit 1
+        ;;
+esac
+GROUP="$( dirname "${FILEP}" )"
+PROJECT="$( basename "${FILEP}" )"
+
+# printf seems to be the best way to put newlines into a string with variables
+printf -v MSG "   REPO: %s\n  GROUP: %s\nPROJECT: %s" "${REPO}" "${GROUP}" "${PROJECT}"
+debug_msg "${MSG}"
+
+mkdir -p "${GROUP}" || {
+    err_msg "Problem creating directories for \"${GROUP}\""
+    exit 1
+}
+
+pushd "${GROUP}" > /dev/null  || {
+    err_msg "Cannot change directory to \"${GROUP}\""
+    exit 1
+}
+
+git clone "${REPO}" || {
+    err_msg "Error cloning repo ${REPO}"
+    exit 1
+}
+
+popd > /dev/null
+
+info_msg "Successfully cloned ${REPO}!"
+
+echo -e "${CYN}DIRECTORIES:${NRM}"
+find "${GROUP}" -type d -name ".git*" -prune -o -type d -print | sed 's/\/\//\//g'
