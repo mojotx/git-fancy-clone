@@ -19,15 +19,15 @@ $ git fclone https://github.com/mojotx/git-fancy-clone.git
 PROJECT: git-fancy-clone.git
 -------------------------------------------------------
 Cloning into 'git-fancy-clone'...
-remote: Enumerating objects: 61, done.
-remote: Counting objects: 100% (61/61), done.
-remote: Compressing objects: 100% (43/43), done.
-remote: Total 61 (delta 20), reused 52 (delta 15), pack-reused 0
-Receiving objects: 100% (61/61), 92.98 KiB | 1002.00 KiB/s, done.
-Resolving deltas: 100% (20/20), done.
+remote: Enumerating objects: 6, done.
+remote: Counting objects: 100% (6/6), done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 6 (delta 0), reused 6 (delta 0), pack-reused 0
+Receiving objects: 100% (6/6), done.
 -------------------------------------------------------------------
-Successfully cloned https://github.com/mojotx/git-fancy-clone.git
+Successfully cloned https://github.com/mojotx/git-fancy-clone.git!
 -------------------------------------------------------------------
 DIRECTORIES:
-mojotx/git-fancy-clone/git-fclone
+mojotx
+mojotx/git-fancy-clone
 ```
